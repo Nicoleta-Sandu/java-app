@@ -10,7 +10,7 @@ library identifier: 'jenkins-shared@main', retriever: modernSCM(
 pipeline {
     agent any
     tools {
-        maven 'Maven'
+        maven 'maven-3.9.8'
     }
     environment {
         IMAGE_NAME = 'nykolesandu/example:1.0'

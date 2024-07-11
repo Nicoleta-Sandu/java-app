@@ -1,28 +1,41 @@
 #!/usr/bin.env groovy
 
-pipeline {   
+library identifier: 'jenkins-shared@main', retriever: modernSCM(
+    [$class: 'GitSCMSource',
+    remote: 'https://github.com/Nicoleta-Sandu/jenkins-shared.git',
+    credentialsID: 'github-credentials'
+    ]
+)
+
+pipeline {
     agent any
+    tools {
+        maven 'Maven'
+    }
+    environment {
+        IMAGE_NAME = 'nykolesandu/example:1.0'
+    }
     stages {
-        stage("test") {
+        stage('build app') {
             steps {
-                script {
-                    echo "Testing the application..."
-
-                }
+                echo 'building application jar...'
+                buildJar()
             }
         }
-        stage("build") {
+        stage('build image') {
             steps {
                 script {
-                    echo "Building the application..."
+                    echo 'building the docker image...'
+                    buildImage(env.IMAGE_NAME)
+                    dockerLogin()
+                    dockerPush(env.IMAGE_NAME)
                 }
             }
-        }
-
+        } 
         stage("deploy") {
             steps {
                 script {
-                    def dockerCmd = 'docker run -d -p 3080:3080 nykolesandu/example:1.0'
+                    def dockerCmd = 'docker run -d -p 8080:8080 nykolesandu/example:1.0'
                     sshagent(['ec2-server-key']){
                         sh "ssh -o StrictHostKeyChecking=no ec2-user@52.57.70.6 ${dockerCmd}"
                     }
